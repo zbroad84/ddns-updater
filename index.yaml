@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   ddns-updater:
   - apiVersion: v2
+    appVersion: 2.9.0
+    created: "2025-10-22T13:22:53.033723012Z"
+    description: A Helm chart for Kubernetes
+    digest: 34aa4c7c5eabce39de095e56703cd33376eaa1be3b1bd9fdd670feb01b75fd0a
+    name: ddns-updater
+    type: application
+    urls:
+    - https://github.com/zbroad84/ddns-updater/releases/download/helm-chart-0.1.3/ddns-updater-0.1.3.tgz
+    version: 0.1.3
+  - apiVersion: v2
     appVersion: 1.16.0
     created: "2025-10-21T20:13:27.019487774Z"
     description: A Helm chart for Kubernetes
@@ -11,4 +21,4 @@ entries:
     urls:
     - https://github.com/zbroad84/ddns-updater/releases/download/helm-chart-0.1.2/ddns-updater-0.1.2.tgz
     version: 0.1.2
-generated: "2025-10-21T20:13:27.019492683Z"
+generated: "2025-10-22T13:22:53.033731648Z"
