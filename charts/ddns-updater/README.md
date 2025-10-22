@@ -2,7 +2,7 @@
 
 A Helm chart for deploying the `qmcgaw/ddns-updater` application to a Kubernetes cluster. This chart supports two primary deployment modes: a **periodic CronJob** for simple updates or a **long-running Deployment** with a Web UI.
 
-* **Chart Version:** `1.0.7`
+* **Chart Version:** `1.0.6`
 * **App Version:** `2.9.0`
 * **Type:** `application`
 
@@ -27,6 +27,28 @@ A Helm chart for deploying the `qmcgaw/ddns-updater` application to a Kubernetes
     ```bash
     helm upgrade --install ddns-updater ddns-updater/ddns-updater --values values.yaml
     ```
+
+---
+
+## Configuration
+
+### Manual Configuration via `config.json` ⚠️
+
+The `ddns-updater` application is designed to be configured primarily via environment variables (supplied by the `ddns-updater-config` ConfigMap in this chart).
+
+**However, if you experience issues with environment variables not correctly populating the application's settings (e.g., DNS records, provider credentials), the recommended workaround is to manually provide a complete `config.json` file on the host.**
+
+1.  Create your `config.json` file containing all required settings.
+2.  Ensure your `values.yaml` is configured to mount this file via `hostPath` persistence.
+
+The chart uses the following values to manage this manual configuration:
+
+| Parameter | Purpose |
+| :--- | :--- |
+| `persistence.enabled: true` | Must be enabled to mount data. |
+| `persistence.hostPath` | Must point to the directory on the host containing your `config.json`. |
+| `config.DATADIR` | Must match the internal mount path (`/updater/data` by default). |
+| `config.CONFIG_FILEPATH` | Must match the internal path to the file (`/updater/data/config.json` by default). |
 
 ---
 
@@ -82,7 +104,6 @@ This mode deploys a long-lived **Kubernetes Deployment** (conditional on **`conf
 | `config.SERVER_ENABLED` | `false` | **Conditional Flag:** Enables the Deployment and web server/UI. |
 | `config.ROOT_URL` | `/` | URL path to append to all paths for the webUI (used in Ingress path). |
 | `config.DATADIR` | `/updater/data` | Internal directory for reading/writing data. This is the PVC mount point. |
-| `config.TZ` | `America/New_York` | Timezone for accurate times. |
 | **CronJob** | | |
 | `cronjob.enabled` | `true` | **Conditional Flag:** If `true`, deploys the **CronJob** resource. |
 | `cronjob.schedule` | `"0 * * * *"` | The cron schedule for the job. Only used when `cronjob.enabled: true`. |
@@ -118,4 +139,3 @@ This mode deploys a long-lived **Kubernetes Deployment** (conditional on **`conf
 * **Probes and Resources:** `livenessProbe`, `readinessProbe`, and `resources` are defined in `values.yaml` but are **only applied** when running in **Continuous Server Mode** (`cronjob.enabled: false`). They are intentionally omitted from the CronJob template.
 * **Public IP Providers:** For configuration options like `config.PUBLICIP_HTTP_PROVIDERS` and others, the default value of `all` uses the complete set of built-in providers. Refer to the application's documentation for a full list of available providers if you wish to restrict them.
 * **Node Affinity:** `nodeSelector`, `tolerations`, and `affinity` are available for both Deployment and CronJob templates, allowing you to control where the pods are scheduled.
-````
