@@ -100,10 +100,8 @@ ingress:
     # kubernetes.io/tls-acme: "true"
   host: chart-example.local
   pathType: ImplementationSpecific
-  tls:
-   - secretName: chart-example-tls
-     hosts:
-       - chart-example.local
+  tls_secretName: chart-example-tls
+  tls_enabled: true
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
