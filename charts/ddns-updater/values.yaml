@@ -89,6 +89,8 @@ securityContext: {}
 
 #Ports need to match config values defined.
 service:
+  enable_app_service: false
+  enable_hc_service: false
   type: ClusterIP
   port: 8000
   health_check_port: 9999
