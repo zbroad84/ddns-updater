@@ -26,8 +26,8 @@ config:
   HEALTH_HEALTHCHECKSIO_UUID: "" #UUID to idenfity with the healthchecks.io server
   DATADIR: /updater/data #Directory to read and write data files from internally
   CONFIG_FILEPATH: /updater/data/config.json #Path to the JSON configuration file
-  BACKUP_PERIOD: 0 #Set to a period (i.e. 72h15m) to enable zip backups of data/config.json and data/updates.json in a zip file
-  BACKUP_DIRECTORY: /updater/data #Directory to write backup zip files to if BACKUP_PERIOD is not 0.
+  BACKUP_PERIOD: 168h15m #Set to a period (i.e. 72h15m) to enable zip backups of data/config.json and data/updates.json in a zip file
+  BACKUP_DIRECTORY: /updater/data/backups #Directory to write backup zip files to if BACKUP_PERIOD is not 0.
   RESOLVER_ADDRESS: 1.1.1.1:53 #Your network DNS A plaintext DNS address to use to resolve your domain names defined in your settings only. For example it can be 1.1.1.1:53. This is useful for split dns, see #389
   LOG_LEVEL: info #Level of logging, debug, info, warning or error
   LOG_CALLER: hidden #Show caller per log line, hidden or short
@@ -59,8 +59,7 @@ persistence:
   storageClassName: manual-hostpath
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  
+  persistentVolumeReclaimPolicy: Retain  
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -136,19 +135,6 @@ autoscaling:
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
-
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
 
 nodeSelector: {}
 

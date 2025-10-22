@@ -46,16 +46,19 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+          {{- if .Values.persistence.enabled }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
+          - name: ddns-updater-data
+            mountPath: {{ .Values.config.DATADIR }}
           {{- end }}
           envFrom:
             - configMapRef:
               name: ddns-updater-config
-      {{- with .Values.volumes }}
+      {{- if .Values.persistence.enabled }}
       volumes:
-        {{- toYaml . | nindent 8 }}
+      - name: ddns-updater-data
+        persistentVolumeClaim:
+          claimName: {{ include "ddns-updater.pv_name" . }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
