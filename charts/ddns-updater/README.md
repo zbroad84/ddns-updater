@@ -7,7 +7,7 @@ A Helm chart for deploying a ddns-updater server to a Kubernetes cluster
 1. Add the Helm chart repo
 
 ```bash
-helm repo add plex https://raw.githubusercontent.com/zbroad84/ddns-updater/gh-pages
+helm repo add ddns-updater https://raw.githubusercontent.com/zbroad84/ddns-updater/gh-pages
 ```
 
 2. Inspect & modify the default values (optional)
@@ -19,7 +19,7 @@ helm show values zbroad84/ddns-updater > values.yaml
 3. Install the chart
 
 ```bash
-helm upgrade --install plex zbroad84/ddns-updater --values values.yaml
+helm upgrade --install ddns-updater zbroad84/ddns-updater --values values.yaml
 ```
 
 ## Values
