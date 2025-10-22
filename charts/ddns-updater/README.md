@@ -50,6 +50,8 @@ The chart uses the following values to manage this manual configuration:
 | `config.DATADIR` | Must match the internal mount path (`/updater/data` by default). |
 | `config.CONFIG_FILEPATH` | Must match the internal path to the file (`/updater/data/config.json` by default). |
 
+For Specifics the configuration and container usage, please see: https://github.com/zbroad84/ddns-updater/blob/master/README.md#container
+
 ---
 
 ## Deployment Modes and Conditional Logic (The `if` Statements) 🚦
