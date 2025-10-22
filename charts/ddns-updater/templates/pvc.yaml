@@ -13,6 +13,6 @@ spec:
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.persistentVolumeReclaimPolicy }}
+      storage: {{ .Values.persistence.storage_capacity }}
   storageClassName: {{ .Values.persistence.storageClassName }}
 {{- end }}
