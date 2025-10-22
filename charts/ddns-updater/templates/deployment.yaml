@@ -52,7 +52,7 @@ spec:
             mountPath: {{ .Values.config.DATADIR }}
           {{- end }}
           envFrom:
-            - configMapRef:
+          - configMapRef:
               name: ddns-updater-config
       {{- if .Values.persistence.enabled }}
       volumes:
