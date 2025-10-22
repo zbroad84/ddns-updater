@@ -1,0 +1,74 @@
+{{- if .Values.cronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ddns-updater.fullname" . }}
+  labels:
+    {{- include "ddns-updater.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      labels:
+        {{- include "ddns-updater.selectorLabels" . | nindent 8 }}
+    spec:
+      # Restart policy is OnFailure or Never for a one-off job
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          # Ensure the Pod is never restarted, as it's a batch job
+          restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "ddns-updater.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: {{ .Chart.Name }}
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              # --- Image details taken from the original Deployment ---
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              # Note: Ports, livenessProbe, and readinessProbe are removed as they are for long-running services.
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              # --- Persistence (Volume Mounts) ---
+              {{- if .Values.persistence.enabled }}
+              volumeMounts:
+              - name: ddns-updater-data
+                mountPath: {{ .Values.config.DATADIR }}
+              {{- end }}
+              # --- Environment Variables ---
+              envFrom:
+              - configMapRef:
+                  name: ddns-updater-config
+          # --- Volumes and Configuration ---
+          {{- if .Values.persistence.enabled }}
+          volumes:
+          - name: ddns-updater-data
+            persistentVolumeClaim:
+              claimName: {{ include "ddns-updater.pv_name" . }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

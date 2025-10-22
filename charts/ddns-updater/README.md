@@ -1,69 +1,121 @@
-# ddns-updater chart
+# ddns-updater Helm Chart
 
-A Helm chart for deploying a ddns-updater server to a Kubernetes cluster
+A Helm chart for deploying the `qmcgaw/ddns-updater` application to a Kubernetes cluster. This chart supports two primary deployment modes: a **periodic CronJob** for simple updates or a **long-running Deployment** with a Web UI.
 
-### Installation via Helm
+* **Chart Version:** `1.0.7`
+* **App Version:** `2.9.0`
+* **Type:** `application`
 
-1. Add the Helm chart repo
+---
 
-```bash
-helm repo add ddns-updater https://raw.githubusercontent.com/zbroad84/ddns-updater/gh-pages
-```
+## Installation via Helm
 
-2. Inspect & modify the default values (optional)
+1.  Add the Helm chart repo
 
-```bash
-helm show values zbroad84/ddns-updater > values.yaml
-```
+    ```bash
+    helm repo add ddns-updater [https://raw.githubusercontent.com/zbroad84/ddns-updater/gh-pages](https://raw.githubusercontent.com/zbroad84/ddns-updater/gh-pages)
+    ```
 
-3. Install the chart
+2.  Inspect & modify the default values (optional)
 
-```bash
-helm upgrade --install ddns-updater zbroad84/ddns-updater --values values.yaml
-```
+    ```bash
+    helm show values ddns-updater/ddns-updater > values.yaml
+    ```
 
-## Values
+3.  Install the chart
+
+    ```bash
+    helm upgrade --install ddns-updater ddns-updater/ddns-updater --values values.yaml
+    ```
+
+---
+
+## Deployment Modes and Conditional Logic (The `if` Statements) 🚦
+
+This chart is designed to deploy either a long-running server or a periodic job. The deployed resources are **conditionally controlled** by the values below, which correspond directly to the `if` statements in the chart templates.
+
+| Key | Default | Controls | Description |
+| :--- | :--- | :--- | :--- |
+| **`cronjob.enabled`** | `true` | **CronJob** | **Conditional Flag:** If `true`, the application is deployed as a **Kubernetes CronJob** (Update and Exit Mode). Must be `false` for Continuous Server Mode. |
+| **`config.SERVER_ENABLED`** | `false` | **Deployment** | **Conditional Flag:** If `true`, the **Deployment** and built-in web server/UI are enabled. This is the primary switch for **Continuous Server Mode**. |
+| **`persistence.enabled`** | `true` | **PVC/PV** | **Conditional Flag:** If `true`, a **PVC** and associated **PV** (if using `hostPath`) are created and mounted. |
+| **`service.enable_app_service`** | `false` | **Service** | **Conditional Flag:** If `true`, deploys the main application **Service**. Requires `config.SERVER_ENABLED: true`. |
+| **`ingress.enabled`** | `false` | **Ingress** | **Conditional Flag:** If `true`, an **Ingress** resource is created. Requires `service.enable_app_service: true`. |
+
+### 1. Update and Exit (Default Mode) ⚙️
+
+This mode deploys a **Kubernetes CronJob** (conditional on **`cronjob.enabled: true`**). The container starts, executes the update, and exits. It's ideal for scheduled, periodic updates.
+
+* **Configuration:**
+    ```yaml
+    cronjob:
+      enabled: true          # Enables the CronJob template
+      schedule: "0 * * * *"  # Runs every hour
+    config:
+      SERVER_ENABLED: false  # Ensures the Deployment template is skipped
+    ```
+* **Note:** The CronJob uses a `restartPolicy: OnFailure` for the Pod template, which is standard for batch jobs.
+
+### 2. Continuous Server Mode (Web UI) 🌐
+
+This mode deploys a long-lived **Kubernetes Deployment** (conditional on **`config.SERVER_ENABLED: true`**), enabling the Web UI and a continuous background update loop.
+
+* **Configuration:**
+    ```yaml
+    cronjob:
+      enabled: false       # Disables the CronJob template
+    config:
+      SERVER_ENABLED: true # Enables the Deployment template and web server
+    service:
+      enable_app_service: true # Expose the web UI
+      port: 8000
+    ```
+
+---
+
+## Configuration Values
 
 | Key | Default | Description |
 | :--- | :--- | :--- |
 | **App Configuration** | | |
-| `config.PERIOD` | `5m` | The default period for checking the public IP address. |
-| `config.PUBLICIP_FETCHERS` | `all` | Comma-separated list of fetcher types (`http`, `dns`) to obtain the public IP address. |
-| `config.UPDATE_COOLDOWN_PERIOD` | `5m` | Duration to wait between updates for each record to avoid rate limiting. |
-| `config.SERVER_ENABLED` | `yes` | Enables the built-in web server and web UI. |
-| `config.LISTENING_ADDRESS` | `:8000` | Internal TCP listening port for the web UI. |
-| `config.ROOT_URL` | `/` | URL path to append to all paths for the webUI (useful for proxies). |
-| `config.DATADIR` | `/updater/data` | Directory to read and write data files from internally. |
-| `config.RESOLVER_ADDRESS` | `1.1.1.1:53` | A plaintext DNS address to use to resolve domain names defined in settings (useful for split DNS). |
-| `config.LOG_LEVEL` | `info` | Level of logging (`debug`, `info`, `warning`, or `error`). |
+| `config.PERIOD` | `5m` | The default period for checking the public IP address (used in Deployment mode). |
+| `config.SERVER_ENABLED` | `false` | **Conditional Flag:** Enables the Deployment and web server/UI. |
+| `config.ROOT_URL` | `/` | URL path to append to all paths for the webUI (used in Ingress path). |
+| `config.DATADIR` | `/updater/data` | Internal directory for reading/writing data. This is the PVC mount point. |
 | `config.TZ` | `America/New_York` | Timezone for accurate times. |
-| `config.SHOUTRRR_ADDRESSES` | `[]` | (optional) Comma-separated list of Shoutrrr addresses (notification services). |
+| **CronJob** | | |
+| `cronjob.enabled` | `true` | **Conditional Flag:** If `true`, deploys the **CronJob** resource. |
+| `cronjob.schedule` | `"0 * * * *"` | The cron schedule for the job. Only used when `cronjob.enabled: true`. |
 | **Image** | | |
-| `replicaCount` | `1` | The number of deployment replicas. |
+| `replicaCount` | `1` | The number of deployment replicas. Only used when `cronjob.enabled: false`. |
 | `image.repository` | `qmcgaw/ddns-updater` | The Docker image repository. |
-| `image.pullPolicy` | `Always` | The image pull policy. |
 | `image.tag` | `""` | Overrides the image tag (defaults to chart `appVersion` if empty). |
-| **Persistence** | | |
-| `persistence.enabled` | `false` | If true, creates a PersistentVolumeClaim for `/updater/data`. |
-| `persistence.storage_capacity` | `5Gi` | The requested storage capacity for the PVC. |
-| `persistence.storageClassName` | `manual-hostpath` | The storage class for the PVC. |
-| `persistence.accessModes` | `[ReadWriteOnce]` | The access modes for the PVC. |
+| **ServiceAccount** | | |
+| `serviceAccount.create` | `true` | **Conditional Flag:** If `true`, a **ServiceAccount** resource will be created. |
+| `serviceAccount.automount` | `true` | If `true`, automatically mounts the ServiceAccount's API credentials. |
+| **Persistence (PVC/PV)** | | |
+| `persistence.enabled` | `true` | **Conditional Flag:** If `true`, a **PVC** and (if using `hostPath`) a **PV** will be created. |
+| `persistence.storage_capacity` | `5Gi` | The requested storage capacity for the PVC/PV. |
+| `persistence.storageClassName` | `manual-hostpath` | The storage class for the PVC/PV. |
+| `persistence.hostPath` | `/updater/data` | **Required if using `hostPath` PV.** The path on the node where data will be stored. |
+| `persistence.persistentVolumeReclaimPolicy` | `Retain` | The reclaim policy for the PV. |
 | **Service** | | |
-| `service.type` | `ClusterIP` | Kubernetes service type. |
-| `service.port` | `80` | The service port. |
+| `service.enable_app_service` | `false` | **Conditional Flag:** If `true`, deploys the main application **Service**. |
+| `service.enable_hc_service` | `false` | **Conditional Flag:** If `true`, deploys a separate **Health Check Service**. |
+| `service.type` | `ClusterIP` | Kubernetes service type for both services. |
+| `service.port` | `8000` | The application service port. **Must match `config.LISTENING_ADDRESS` port.** |
+| `service.health_check_port` | `9999` | The health check service port. |
 | **Ingress** | | |
-| `ingress.enabled` | `false` | If true, creates an Ingress resource. |
-| `ingress.hosts` | `[chart-example.local]` | A list of hostnames to use for the Ingress. |
-| **Autoscaling** | | |
-| `autoscaling.enabled` | `false` | If true, enables Horizontal Pod Autoscaler. |
-| `autoscaling.minReplicas` | `1` | Minimum number of replicas for HPA. |
-| `autoscaling.maxReplicas` | `100` | Maximum number of replicas for HPA. |
-| **Security/Contexts** | | |
-| `podSecurityContext` | `{}` | Security context applied to the pod. |
-| `securityContext` | `{}` | Security context applied to the container. |
+| `ingress.enabled` | `false` | **Conditional Flag:** If `true`, an **Ingress** resource is created. |
+| `ingress.host` | `chart-example.local` | The hostname to use for the Ingress. |
+| `ingress.className` | `""` | The Ingress class to use (e.g., `nginx`). |
+| `ingress.annotations` | `{}` | Annotations to add to the Ingress (e.g., cert-manager setup). |
 
 ---
 
 ### Additional Configuration Notes
 
-For **Public IP Providers** options, such as `config.PUBLICIP_HTTP_PROVIDERS`, `config.PUBLICIPV4_HTTP_PROVIDERS`, `config.PUBLICIPV6_HTTP_PROVIDERS`, and `config.PUBLICIP_DNS_PROVIDERS`, the default value of `all` uses the complete set of built-in providers. Refer to the application's documentation for a full list of available providers if you wish to restrict them.
+* **Probes and Resources:** `livenessProbe`, `readinessProbe`, and `resources` are defined in `values.yaml` but are **only applied** when running in **Continuous Server Mode** (`cronjob.enabled: false`). They are intentionally omitted from the CronJob template.
+* **Public IP Providers:** For configuration options like `config.PUBLICIP_HTTP_PROVIDERS` and others, the default value of `all` uses the complete set of built-in providers. Refer to the application's documentation for a full list of available providers if you wish to restrict them.
+* **Node Affinity:** `nodeSelector`, `tolerations`, and `affinity` are available for both Deployment and CronJob templates, allowing you to control where the pods are scheduled.
+````

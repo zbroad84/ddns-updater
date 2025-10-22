@@ -2,6 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+#If you want to run this app to simply update and forget, you will want to run it as a cronjob, which is setup with the default settings.
+#Turning the field config.SERVER_ENABLED: true will allow for both the deployment to spin up, but also enable webserver and webui
+cronjob:
+  enabled: true
+  schedule: "0 * * * *"
+
 ################
 # App Specific #
 ################
@@ -52,7 +58,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 persistence:
-  enabled: false
+  enabled: true
    # If not set and create is true, a name is generated using the fullname template
   name: ""
   storage_capacity: 5Gi
