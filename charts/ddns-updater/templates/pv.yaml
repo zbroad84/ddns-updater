@@ -15,5 +15,5 @@ spec:
   persistentVolumeReclaimPolicy: {{ .Values.persistence.persistentVolumeReclaimPolicy }}
   storageClassName: {{ .Values.persistence.storageClassName }}
   hostPath:
-    path: {{ .Values.config.DATADIR }}
+    path: {{ .Values.persistence.hostPath }}
 {{- end }}

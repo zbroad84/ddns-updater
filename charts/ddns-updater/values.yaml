@@ -57,6 +57,7 @@ persistence:
   name: ""
   storage_capacity: 5Gi
   storageClassName: manual-hostpath
+  hostPath: /updater/data
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain  
